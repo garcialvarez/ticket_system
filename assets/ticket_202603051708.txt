@@ -1,0 +1,4 @@
+Radicado: 1772755682
+Identificación: 123456789
+Correo: test@example.com
+Tipo de reclamación: Reclamo de prueba

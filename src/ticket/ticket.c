@@ -1,0 +1,131 @@
+#include "../../include/ticket/ticket.h"
+#include "../../include/utils/utils.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
+
+#if defined(_WIN32)
+#include <direct.h>
+#define MKDIR(dir) _mkdir(dir)
+#else
+#define MKDIR(dir) mkdir(dir, 0777)
+#endif
+
+Ticket *create_ticket(void) {
+  /* Reservación con malloc según requisito */
+  Ticket *new_ticket = (Ticket *)malloc(sizeof(Ticket));
+  if (new_ticket == NULL) {
+    fprintf(stderr, "Error crítico: No se pudo asignar memoria dinámicamente "
+                    "para el ticket.\n");
+    return NULL;
+  }
+
+  /* Inicializar valores del ticket */
+  memset(new_ticket->identificacion, 0, sizeof(new_ticket->identificacion));
+  memset(new_ticket->correo, 0, sizeof(new_ticket->correo));
+  memset(new_ticket->tipo_reclamacion, 0, sizeof(new_ticket->tipo_reclamacion));
+  new_ticket->radicado = 0;
+
+  return new_ticket;
+}
+
+int fill_ticket_data(Ticket *ticket) {
+  if (ticket == NULL) {
+    return 0;
+  }
+
+  printf("Ingrese su identificación (numérica): ");
+  if (!read_string(ticket->identificacion, sizeof(ticket->identificacion)) ||
+      !is_numeric(ticket->identificacion) ||
+      strlen(ticket->identificacion) == 0) {
+    fprintf(stderr, "Error: La identificación es inválida, está vacía o no es "
+                    "puramente numérica.\n");
+    return 0;
+  }
+
+  printf("Ingrese su correo electrónico: ");
+  if (!read_string(ticket->correo, sizeof(ticket->correo)) ||
+      !is_valid_email(ticket->correo) || strlen(ticket->correo) == 0) {
+    fprintf(stderr, "Error: Correo inválido. Es obligatorio que contenga el "
+                    "carácter '@'.\n");
+    return 0;
+  }
+
+  printf("Ingrese el tipo de reclamación: ");
+  if (!read_string(ticket->tipo_reclamacion,
+                   sizeof(ticket->tipo_reclamacion)) ||
+      strlen(ticket->tipo_reclamacion) == 0) {
+    fprintf(stderr,
+            "Error: El tipo de reclamación no puede ser una cadena vacía.\n");
+    return 0;
+  }
+
+  /* Generación del radicado empleando casting explícito (long) */
+  srand((unsigned int)time(NULL));
+  long timestamp = (long)time(NULL);
+  long random_offset = (long)rand() % 10000;
+
+  ticket->radicado = timestamp + random_offset;
+
+  printf("\nTicket registrado correctamente.\n");
+  printf("Radicado generado: %ld\n", ticket->radicado);
+
+  return 1;
+}
+
+int save_ticket(const Ticket *ticket) {
+  if (ticket == NULL) {
+    fprintf(stderr,
+            "Error: Intento de guardar con referencia nula del Ticket.\n");
+    return 0;
+  }
+
+  /* Intentar generar carpeta assets. Si falla o ya existe, omitir aviso */
+  MKDIR("assets");
+
+  /* Variables de fecha */
+  char filepath[256];
+  struct tm *tm_info;
+  time_t rawtime;
+
+  time(&rawtime);
+  tm_info = localtime(&rawtime);
+  if (tm_info == NULL) {
+    fprintf(stderr,
+            "Error: No se ha podido obtener la hora local del sistema.\n");
+    return 0;
+  }
+
+  char time_str[20];
+  strftime(time_str, sizeof(time_str), "%Y%m%d%H%M", tm_info);
+
+  /* Se nombra el archivo de la forma indicada ticket_*.txt */
+  snprintf(filepath, sizeof(filepath), "assets/ticket_%s.txt", time_str);
+
+  /* Validar apertura de archivo (fopen != NULL) */
+  FILE *file = fopen(filepath, "w");
+  if (file == NULL) {
+    fprintf(stderr, "Error: No se pudo abrir el archivo '%s' para escritura.\n",
+            filepath);
+    return 0;
+  }
+
+  /* Se persisten los datos al archivo */
+  fprintf(file, "Radicado: %ld\n", ticket->radicado);
+  fprintf(file, "Identificación: %s\n", ticket->identificacion);
+  fprintf(file, "Correo: %s\n", ticket->correo);
+  fprintf(file, "Tipo de reclamación: %s\n", ticket->tipo_reclamacion);
+
+  fclose(file);
+  return 1;
+}
+
+void free_ticket(Ticket *ticket) {
+  if (ticket != NULL) {
+    free(ticket); /* Liberar bloque para evitar memory leaks */
+  }
+}
