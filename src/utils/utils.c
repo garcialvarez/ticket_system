@@ -6,7 +6,7 @@
 void clear_input_buffer(void) {
   int c;
   while ((c = getchar()) != '\n' && c != EOF) {
-    /* Descartar caracteres hasta nueva línea o EOF */
+    // throw away the rest of the line
   }
 }
 
@@ -17,11 +17,11 @@ bool read_string(char *buffer, size_t size) {
 
   size_t len = strlen(buffer);
   if (len > 0 && buffer[len - 1] == '\n') {
-    /* Reemplazar salto de línea por caracter nulo */
+    // chop off the trailing newline
     buffer[len - 1] = '\0';
   } else {
-    /* Si no se leyó un salto de línea, la entrada era más grande que el buffer.
-       Limpiamos el buffer de entrada. */
+    // the user typed more than the buffer sizes, so flush the rest to avoid
+    // weird bugs
     clear_input_buffer();
   }
 
@@ -46,6 +46,6 @@ bool is_valid_email(const char *email) {
     return false;
   }
 
-  /* Válida con presencia del símbolo @ como pidió el requerimiento */
+  // rudimentary check just making sure there's an '@' - could be much stricter
   return strchr(email, '@') != NULL;
 }

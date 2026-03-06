@@ -5,19 +5,19 @@ typedef struct {
   char identificacion[50];
   char correo[100];
   char tipo_reclamacion[100];
-  long radicado;
+  unsigned long radicado;
 } Ticket;
 
-/* Función que reserva memoria dinámica para la estructura de Ticket */
+// allocate ticket on the heap
 Ticket *create_ticket(void);
 
-/* Llena los datos del ticket pasado por referencia, solicitándolo al usuario */
+// populates the ticket in-place via user prompts
 int fill_ticket_data(Ticket *ticket);
 
-/* Guarda el ticket en un archivo dentro de la carpeta assets/ */
+// dumps ticket struct to a file in assets dir
 int save_ticket(const Ticket *ticket);
 
-/* Libera la memoria reservada del ticket */
+// clean up heap allocation
 void free_ticket(Ticket *ticket);
 
 #endif /* TICKET_H */

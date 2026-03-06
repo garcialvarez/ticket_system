@@ -1,19 +1,19 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 
-/* Limpia el buffer de entrada para evitar saltos de línea basura al leer */
+// flushes stdin to avoid ghost newlines breaking the next prompt
 void clear_input_buffer(void);
 
-/* Lee una cadena de caracteres desde stdin de manera segura, sin buffer overflow */
+// safer wrapper around fgets to prevent buffer overflows
 bool read_string(char *buffer, size_t size);
 
-/* Verifica si la cadena contiene únicamente dígitos */
+// simple digit check
 bool is_numeric(const char *str);
 
-/* Verifica de manera elemental si un correo es válido (contiene '@') */
+// rudimentary email validation, we just verify an '@' is present here
 bool is_valid_email(const char *email);
 
 #endif /* UTILS_H */

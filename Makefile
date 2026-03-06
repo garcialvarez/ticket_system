@@ -2,42 +2,42 @@ CC = gcc
 CFLAGS = -Wall -Wextra -std=c11
 TARGET = ticket_app
 
-# Directorios de interés
+# project layout
 SRC_DIR = src
 INC_DIR = include
 OBJ_DIR = obj
 
-# Archivos fuente a compilar
+# grab all our source files
 SRCS = $(SRC_DIR)/main.c \
        $(SRC_DIR)/ticket/ticket.c \
        $(SRC_DIR)/utils/utils.c
 
-# Generar archivos objeto esperados a partir de los .c
+# map .c files to .o files in the build dir
 OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-# Targets base
+# default build target
 all: $(TARGET) assets_dir
 
-# Compilar ejecutable final
+# link everything together into our final binary
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
-# Regla para compilar objeto intermedio .c -> .o
+# compile individual objects, creating dirs on the fly as needed
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -I$(INC_DIR) -I$(INC_DIR)/ticket -I$(INC_DIR)/utils -c $< -o $@
 
-# Target para generar la carpeta de text-files (según lo dicta el requerimiento)
+# make sure we have a place to save the generated tickets
 assets_dir:
 	@mkdir -p assets
 
-# Limpiar compilación (archivos y ejecutable) para hacer clean builds
+# wipe out the build folder and binary
 clean:
 	rm -rf $(OBJ_DIR) $(TARGET)
 
-# Ejecuta todo previo a la corrida si no se ha hecho para estar seguro y ejecuta el CLI
+# handy shortcut to build and run in one go
 run: all
 	./$(TARGET)
 
-# Prevenir malfuncionamiento si algún fichero en la ruta coincide con un nombre de Target
+# these aren't real files, just make commands
 .PHONY: all clean run assets_dir

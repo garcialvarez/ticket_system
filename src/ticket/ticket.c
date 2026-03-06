@@ -16,15 +16,14 @@
 #endif
 
 Ticket *create_ticket(void) {
-  /* Reservación con malloc según requisito */
+  // hand out a brand new ticket on the heap
   Ticket *new_ticket = (Ticket *)malloc(sizeof(Ticket));
   if (new_ticket == NULL) {
-    fprintf(stderr, "Error crítico: No se pudo asignar memoria dinámicamente "
-                    "para el ticket.\n");
+    fprintf(stderr, "Critical: malloc failed to allocate a ticket.\n");
     return NULL;
   }
 
-  /* Inicializar valores del ticket */
+  // zero everything out so we don't end up with garbage in the arrays
   memset(new_ticket->identificacion, 0, sizeof(new_ticket->identificacion));
   memset(new_ticket->correo, 0, sizeof(new_ticket->correo));
   memset(new_ticket->tipo_reclamacion, 0, sizeof(new_ticket->tipo_reclamacion));
@@ -64,15 +63,17 @@ int fill_ticket_data(Ticket *ticket) {
     return 0;
   }
 
-  /* Generación del radicado empleando casting explícito (long) */
+  // combining unix timestamp with a slight random offset to keep ids fairly
+  // unique. Using time_t and unsigned long avoids the Y2038 overflow bug on
+  // 32-bit builds.
   srand((unsigned int)time(NULL));
-  long timestamp = (long)time(NULL);
-  long random_offset = (long)rand() % 10000;
+  time_t timestamp = time(NULL);
+  unsigned long random_offset = (unsigned long)rand() % 10000;
 
-  ticket->radicado = timestamp + random_offset;
+  ticket->radicado = (unsigned long)timestamp + random_offset;
 
   printf("\nTicket registrado correctamente.\n");
-  printf("Radicado generado: %ld\n", ticket->radicado);
+  printf("Radicado generado: %lu\n", ticket->radicado);
 
   return 1;
 }
@@ -84,10 +85,10 @@ int save_ticket(const Ticket *ticket) {
     return 0;
   }
 
-  /* Intentar generar carpeta assets. Si falla o ya existe, omitir aviso */
+  // forcefully create the assets folder, ignore errors if it already exists
   MKDIR("assets");
 
-  /* Variables de fecha */
+  // setup formatting for the filename
   char filepath[256];
   struct tm *tm_info;
   time_t rawtime;
@@ -103,10 +104,10 @@ int save_ticket(const Ticket *ticket) {
   char time_str[20];
   strftime(time_str, sizeof(time_str), "%Y%m%d%H%M", tm_info);
 
-  /* Se nombra el archivo de la forma indicada ticket_*.txt */
+  // generate an easy to read path based on the current minute
   snprintf(filepath, sizeof(filepath), "assets/ticket_%s.txt", time_str);
 
-  /* Validar apertura de archivo (fopen != NULL) */
+  // attempt to grab a write lock on the new file
   FILE *file = fopen(filepath, "w");
   if (file == NULL) {
     fprintf(stderr, "Error: No se pudo abrir el archivo '%s' para escritura.\n",
@@ -114,8 +115,8 @@ int save_ticket(const Ticket *ticket) {
     return 0;
   }
 
-  /* Se persisten los datos al archivo */
-  fprintf(file, "Radicado: %ld\n", ticket->radicado);
+  // dump struct payload into plain text file
+  fprintf(file, "Radicado: %lu\n", ticket->radicado);
   fprintf(file, "Identificación: %s\n", ticket->identificacion);
   fprintf(file, "Correo: %s\n", ticket->correo);
   fprintf(file, "Tipo de reclamación: %s\n", ticket->tipo_reclamacion);
@@ -126,6 +127,7 @@ int save_ticket(const Ticket *ticket) {
 
 void free_ticket(Ticket *ticket) {
   if (ticket != NULL) {
-    free(ticket); /* Liberar bloque para evitar memory leaks */
+    // safely return the ticket pointer to the OS
+    free(ticket);
   }
 }

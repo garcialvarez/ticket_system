@@ -1,0 +1,4 @@
+Radicado: 1772828402
+Identificación: 123456789
+Correo: usuario@example.com
+Tipo de reclamación: Me cortaron el servicio
